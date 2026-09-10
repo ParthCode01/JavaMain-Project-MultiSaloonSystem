@@ -6,6 +6,8 @@ import com.parth.saloonmanagement.dto.SignUpRequest;
 import com.parth.saloonmanagement.entity.Role;
 import com.parth.saloonmanagement.entity.Tenant;
 import com.parth.saloonmanagement.entity.User;
+import com.parth.saloonmanagement.exception.InvalidCredentialsException;
+import com.parth.saloonmanagement.exception.ResourceNotFoundException;
 import com.parth.saloonmanagement.repository.TenantRepository;
 import com.parth.saloonmanagement.repository.UserRepository;
 import com.parth.saloonmanagement.security.JwtService;
@@ -40,10 +42,10 @@ public class AuthService {
     //Login
     public AuthResponse login(LoginRequest request){
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found "));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found "));
 
         if(!passwordEncoder.matches(request.getPassword() , user.getPassword())){
-            throw new RuntimeException("Invalid password");
+            throw new InvalidCredentialsException("Invalid password");
         }
 
 
@@ -61,7 +63,7 @@ public class AuthService {
         String username = request.getEmail();
 
         if(userRepository.findByEmail(username).isPresent()){
-            throw new RuntimeException("User already exists");
+            throw new ResourceNotFoundException("User already exists");
         }
 
         Tenant tenant = new Tenant();

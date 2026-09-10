@@ -3,6 +3,7 @@ package com.parth.saloonmanagement.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +35,9 @@ public class User implements UserDetails {
 
     @NotBlank(message = "Password required")
     private String password;
+
+    @Size(min = 10, max = 10, message = "Valid contact number is required")
+    private String contact;
 
     @Enumerated(EnumType.STRING)
     private Role role;

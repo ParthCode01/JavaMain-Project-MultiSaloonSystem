@@ -1,6 +1,6 @@
 package com.parth.saloonmanagement.config;
 
-
+import org.springframework.security.config.Customizer;
 import com.parth.saloonmanagement.security.JwtAuthenticationFilter;
 import com.parth.saloonmanagement.security.JwtService;
 import com.parth.saloonmanagement.security.UserDetailService;
@@ -35,7 +35,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthenticationFilter , UsernamePasswordAuthenticationFilter.class);
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
 
