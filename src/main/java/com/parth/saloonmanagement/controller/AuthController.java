@@ -1,6 +1,7 @@
 package com.parth.saloonmanagement.controller;
 
 import com.parth.saloonmanagement.dto.AuthResponse;
+import com.parth.saloonmanagement.dto.CustomerSignupRequest;
 import com.parth.saloonmanagement.dto.LoginRequest;
 import com.parth.saloonmanagement.dto.SignUpRequest;
 import com.parth.saloonmanagement.service.AuthService;
@@ -32,5 +33,11 @@ public class AuthController {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(response);
 
+    }
+
+    @PostMapping("/customer-signup")
+    public ResponseEntity<AuthResponse> signUp(@Valid @RequestBody CustomerSignupRequest request){
+        AuthResponse response = authService.customerSignUp(request);
+        return ResponseEntity.ok(response);
     }
 }

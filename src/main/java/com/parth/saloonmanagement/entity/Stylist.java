@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @Entity
@@ -36,6 +37,11 @@ public class Stylist{
     @ManyToOne
     private Tenant tenant;
 
+    @OneToMany(mappedBy = "stylist")
+    private List<Booking> bookings;
+
+    private LocalTime workStartTime;
+    private LocalTime workEndTime;
 
 
 }

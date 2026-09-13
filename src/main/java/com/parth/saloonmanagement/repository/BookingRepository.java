@@ -1,20 +1,27 @@
 package com.parth.saloonmanagement.repository;
 
 
-import com.parth.saloonmanagement.entity.Booking;
-import com.parth.saloonmanagement.entity.Stylist;
-import com.parth.saloonmanagement.entity.Tenant;
-import com.parth.saloonmanagement.entity.User;
+import com.parth.saloonmanagement.entity.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    List<Booking>findByStylistAndStartTimeLessThanAndEndTimeGreaterThan(
-      Stylist stylist, LocalDateTime endTime , LocalDateTime startTime
+    List<Booking>findByStylistAndStartTimeLessThanAndEndTimeGreaterThanAndStatusIn(
+      Stylist stylist, LocalDateTime endTime ,
+      LocalDateTime startTime,
+      List<BookingStatus>statuses
+    );
+
+    List<Booking> findByUserAndStartTimeLessThanAndEndTimeGreaterThanAndStatusIn(
+            User user,
+            LocalDateTime startTimeIsLessThan,
+            LocalDateTime endTimeIsGreaterThan,
+            List<BookingStatus> statuses
     );
 
     List<Booking> findByTenant(Tenant tenant);

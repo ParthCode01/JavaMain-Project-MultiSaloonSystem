@@ -1,11 +1,11 @@
 package com.parth.saloonmanagement.service;
 
 
+import com.parth.saloonmanagement.dto.BookingResponse;
 import com.parth.saloonmanagement.dto.StylistRequest;
 import com.parth.saloonmanagement.dto.StylistResponse;
-import com.parth.saloonmanagement.entity.Stylist;
-import com.parth.saloonmanagement.entity.Tenant;
-import com.parth.saloonmanagement.entity.User;
+import com.parth.saloonmanagement.entity.*;
+import com.parth.saloonmanagement.exception.AccessDeniedException;
 import com.parth.saloonmanagement.exception.ResourceNotFoundException;
 import com.parth.saloonmanagement.repository.StylistRepository;
 import com.parth.saloonmanagement.repository.UserRepository;
@@ -121,5 +121,42 @@ public class StylistService {
                 .orElseThrow(() -> new ResourceNotFoundException("Stylist not found"));
 
         stylistRepository.delete(stylist);
+    }
+
+    public List<BookingResponse> getMyBookings()
+    throws AccessDeniedException{
+
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (!user.getRole().equals(Role.ROLE_STYLIST)) {
+            throw new AccessDeniedException("Not allowed");
+        }
+        Tenant tenant = user.getTenant();
+
+        Stylist stylist = stylistRepository.findByUserAndTenant(user, tenant)
+                .orElseThrow(() -> new ResourceNotFoundException("Stylist not found"));
+
+
+        List<Booking> bookings = stylist.getBookings();
+
+        List<BookingResponse> responses = new ArrayList<>();
+
+        for (Booking booking : bookings) {
+
+            BookingResponse response = BookingResponse.builder()
+                    .id(booking.getId())
+                    .status(booking.getStatus())
+                    .startTime(booking.getStartTime())
+                    .endTime(booking.getEndTime())
+                    .treatmentName(booking.getTreatment() != null ? booking.getTreatment().getName() : null)
+                    .stylistName(stylist.getName())
+                    .build();
+
+            responses.add(response);
+        }
+
+        return responses;
     }
 }

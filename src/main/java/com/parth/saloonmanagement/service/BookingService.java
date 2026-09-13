@@ -14,7 +14,7 @@ import com.parth.saloonmanagement.repository.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.AccessDeniedException;
+import com.parth.saloonmanagement.exception.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,13 +52,30 @@ public class BookingService {
         LocalDateTime endTime = startTime.plusMinutes(treatment.getDurationMinutes());
 
         List<Booking> conflicts = bookingRepository
-                .findByStylistAndStartTimeLessThanAndEndTimeGreaterThan(stylist , endTime , startTime );
+                .findByStylistAndStartTimeLessThanAndEndTimeGreaterThanAndStatusIn(
+                        stylist ,
+                        endTime ,
+                        startTime,
+                        List.of(BookingStatus.PENDING , BookingStatus.CONFIRMED));
 
-
+        List<Booking> conflictOfUser =
+                bookingRepository.findByUserAndStartTimeLessThanAndEndTimeGreaterThanAndStatusIn(
+                        user,
+                        endTime,
+                        startTime,
+                        List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)
+                );
         if(!conflicts.isEmpty()){
             throw new BookingConflictException("Stylist is already booked");
         }
+        if(!conflictOfUser.isEmpty()){
+            throw new BookingConflictException("User is already booked");
+        }
+        if (startTime.toLocalTime().isBefore(stylist.getWorkStartTime())
+                || endTime.toLocalTime().isAfter(stylist.getWorkEndTime())) {
 
+            throw new BookingConflictException("Booking is outside stylist working hours");
+        }
         Booking booking = new Booking();
 
         booking.setUser(user);

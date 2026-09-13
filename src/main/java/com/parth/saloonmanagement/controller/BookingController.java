@@ -1,4 +1,4 @@
-package com.parth.saloonmanagement.controller;
+    package com.parth.saloonmanagement.controller;
 
 import com.parth.saloonmanagement.dto.BookingRequest;
 import com.parth.saloonmanagement.dto.BookingResponse;
@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.AccessDeniedException;
+import com.parth.saloonmanagement.exception.AccessDeniedException;
 import java.util.List;
 
 @RestController
@@ -53,7 +53,7 @@ public class BookingController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<BookingResponse> deleteBooking(@PathVariable Long id) {
+    public ResponseEntity<BookingResponse> deleteBooking(@PathVariable Long id) throws AccessDeniedException {
         BookingResponse response = bookingService.deleteBooking(id);
         return ResponseEntity.ok(response);
     }
