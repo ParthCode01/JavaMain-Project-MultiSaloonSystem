@@ -3,6 +3,7 @@ package com.parth.saloonmanagement.service;
 
 import com.parth.saloonmanagement.dto.BookingRequest;
 import com.parth.saloonmanagement.dto.BookingResponse;
+import com.parth.saloonmanagement.dto.BookingStatusRequest;
 import com.parth.saloonmanagement.entity.*;
 import com.parth.saloonmanagement.exception.BookingConflictException;
 import com.parth.saloonmanagement.exception.ResourceNotFoundException;
@@ -10,8 +11,12 @@ import com.parth.saloonmanagement.repository.BookingRepository;
 import com.parth.saloonmanagement.repository.StylistRepository;
 import com.parth.saloonmanagement.repository.TreatmentRepository;
 import com.parth.saloonmanagement.repository.UserRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -31,22 +36,26 @@ public class BookingService {
 
     public BookingResponse createBooking(BookingRequest bookingRequest){
 
-        User user = userRepository.findById(bookingRequest.getUserId())
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Treatment treatment = treatmentRepository.findById(bookingRequest.getTreatmentId())
+
+        Treatment treatment = treatmentRepository.findByIdAndTenant(bookingRequest.getTreatmentId(), user.getTenant())
                 .orElseThrow(() -> new ResourceNotFoundException("Treatment not found"));
-        Stylist stylist = stylistRepository.findById(bookingRequest.getStylistId())
+
+        Stylist stylist = stylistRepository.findByIdAndTenant(bookingRequest.getStylistId(), user.getTenant())
                 .orElseThrow(() -> new ResourceNotFoundException("Stylist not found"));
 
 
         LocalDateTime startTime = bookingRequest.getStartTime();
         LocalDateTime endTime = startTime.plusMinutes(treatment.getDurationMinutes());
 
-        List<Booking> conflits = bookingRepository
+        List<Booking> conflicts = bookingRepository
                 .findByStylistAndStartTimeLessThanAndEndTimeGreaterThan(stylist , endTime , startTime );
 
 
-        if(!conflits.isEmpty()){
+        if(!conflicts.isEmpty()){
             throw new BookingConflictException("Stylist is already booked");
         }
 
@@ -73,6 +82,182 @@ public class BookingService {
 
     }
 
+    public BookingResponse deleteBooking(Long id)
+            throws AccessDeniedException{
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Tenant tenant = user.getTenant();
+        Role role = user.getRole();
+
+        Booking booking;
+        if (role == Role.ROLE_OWNER) {
+
+            booking = bookingRepository.findByIdAndTenant(id, tenant)
+                    .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        } else if (role == Role.ROLE_CUSTOMER) {
+
+            booking = bookingRepository.findByIdAndUser(id, user)
+                    .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        } else {
+
+            throw new AccessDeniedException("You are not allowed to delete booking");
+        }
+
+
+
+        BookingResponse response = BookingResponse.builder()
+                .id(booking.getId())
+                .status(booking.getStatus())
+                .startTime(booking.getStartTime())
+                .endTime(booking.getEndTime())
+                .treatmentName(booking.getTreatment().getName())
+                .stylistName(booking.getStylist().getName())
+                .build();
+
+        bookingRepository.delete(booking);
+        return response;
+
+
+
+
+    }
+
+    public BookingResponse updateBookingStatus(Long id, BookingStatusRequest request)
+            throws AccessDeniedException {
+
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Tenant tenant = user.getTenant();
+        Role role = user.getRole();
+
+        Booking booking;
+
+        if (role == Role.ROLE_OWNER) {
+
+            booking = bookingRepository.findByIdAndTenant(id, tenant)
+                    .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        } else if (role == Role.ROLE_CUSTOMER) {
+
+            booking = bookingRepository.findByIdAndUser(id, user)
+                    .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        } else {
+
+            throw new AccessDeniedException("You are not allowed to update booking status");
+        }
+
+        if (role == Role.ROLE_CUSTOMER
+                && request.getStatus() != BookingStatus.CANCELLED) {
+
+            throw new AccessDeniedException("Customer can only cancel bookings");
+        }
+
+        booking.setStatus(request.getStatus());
+
+        bookingRepository.save(booking);
+
+        return BookingResponse.builder()
+                .id(booking.getId())
+                .status(booking.getStatus())
+                .startTime(booking.getStartTime())
+                .endTime(booking.getEndTime())
+                .treatmentName(booking.getTreatment().getName())
+                .stylistName(booking.getStylist().getName())
+                .build();
+    }
+    public BookingResponse getBookingById(Long id) {
+
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Tenant tenant = user.getTenant();
+        Role role = user.getRole();
+
+        Booking booking;
+
+        if (role == Role.ROLE_OWNER) {
+
+            booking = bookingRepository.findByIdAndTenant(id, tenant)
+                    .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        } else if (role == Role.ROLE_CUSTOMER) {
+
+            booking = bookingRepository.findByIdAndUser(id, user)
+                    .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        } else {
+            throw new ResourceNotFoundException("Booking not found");
+        }
+
+        return BookingResponse.builder()
+                .id(booking.getId())
+                .status(booking.getStatus())
+                .startTime(booking.getStartTime())
+                .endTime(booking.getEndTime())
+                .treatmentName(booking.getTreatment().getName())
+                .stylistName(booking.getStylist().getName())
+                .build();
+    }
+
+
+    public List<BookingResponse> getAllBookings(){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Tenant tenant = user.getTenant();
+
+        Role role = user.getRole();
+
+        List<Booking> list;
+
+        if(role == Role.ROLE_OWNER){
+
+            list = bookingRepository.findByTenant(tenant);
+
+        }else if(role == Role.ROLE_CUSTOMER){
+
+            list = bookingRepository.findByUser(user);
+
+        }else{
+            list = bookingRepository.findByTenant(tenant);
+        }
+        List<BookingResponse> responses = new ArrayList<>();
+
+        for(Booking booking: list){
+            BookingResponse response = new BookingResponse(
+                    booking.getId(),
+                    booking.getStatus(),
+                    booking.getStartTime(),
+                    booking.getEndTime(),
+                    booking.getTreatment().getName(),
+                    booking.getStylist().getName()
+
+            );
+            responses.add(response);
+        }
+
+        return responses;
+
+    }
 
 
 }

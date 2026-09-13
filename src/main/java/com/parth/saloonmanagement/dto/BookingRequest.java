@@ -19,9 +19,6 @@ public class BookingRequest {
     @NotNull(message = "Treatment id is required")
     private Long treatmentId;
 
-    @NotNull(message = "User id is required")
-    private Long userId;
-
     @NotNull(message = "Start time is required")
     @Future
     private LocalDateTime startTime;
