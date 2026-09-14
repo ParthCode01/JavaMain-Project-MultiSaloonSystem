@@ -3,13 +3,11 @@
 import com.parth.saloonmanagement.dto.BookingRequest;
 import com.parth.saloonmanagement.dto.BookingResponse;
 import com.parth.saloonmanagement.dto.BookingStatusRequest;
-import com.parth.saloonmanagement.entity.Booking;
-import com.parth.saloonmanagement.entity.BookingStatus;
 import com.parth.saloonmanagement.service.BookingService;
-import jakarta.persistence.GeneratedValue;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.parth.saloonmanagement.exception.AccessDeniedException;
@@ -57,4 +55,38 @@ public class BookingController {
         BookingResponse response = bookingService.deleteBooking(id);
         return ResponseEntity.ok(response);
     }
-}
+
+
+    @GetMapping("/my")
+    public ResponseEntity<List<BookingResponse>> getBookingsByUserId() {
+        return ResponseEntity.ok(bookingService.getMyUserBookings());
+    }
+
+
+    @PreAuthorize("hasRole('OWNER')")
+    @GetMapping
+    public ResponseEntity<List<BookingResponse>> getMyTenantBookings() {
+        return ResponseEntity.ok(bookingService.getMyTenantBookings());
+    }
+
+    @PreAuthorize("hasRole('OWNER')")
+    @PatchMapping("/{id}/confirm")
+    public ResponseEntity<Void> confirmBooking(@PathVariable Long id) {
+        bookingService.confirmBooking(id);
+        return ResponseEntity.ok().build();
+    }
+    @PreAuthorize("hasRole('OWNER')")
+    @PatchMapping("/{id}/completed")
+    public ResponseEntity<Void> completeBooking(@PathVariable Long id) {
+        bookingService.completeBooking(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasAnyRole('OWNER', 'CUSTOMER')")
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<Void> cancelBooking(@PathVariable Long id) {
+        bookingService.cancelBooking(id);
+        return ResponseEntity.ok().build();
+    }
+
+    }

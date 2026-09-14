@@ -65,6 +65,7 @@ public class BookingService {
                         startTime,
                         List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)
                 );
+
         if(!conflicts.isEmpty()){
             throw new BookingConflictException("Stylist is already booked");
         }
@@ -276,5 +277,155 @@ public class BookingService {
 
     }
 
+    public List<BookingResponse> getMyTenantBookings(){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Tenant tenant = user.getTenant();
+
+        List<Booking> bookings = bookingRepository.findByTenant(tenant);
+
+        List<BookingResponse>responses = new ArrayList<>();
+
+        for(Booking booking : bookings){
+            BookingResponse response = new BookingResponse(
+                    booking.getId(),
+                    booking.getStatus(),
+                    booking.getStartTime(),
+                    booking.getEndTime(),
+                    booking.getTreatment().getName(),
+                    booking.getStylist().getName()
+
+            );
+
+            responses.add(response);
+        }
+        return responses;
+
+
+    }
+
+
+    public List<BookingResponse> getMyUserBookings(){
+     String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+     User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+
+     List<Booking> bookings = bookingRepository.findByUserId(user.getId());
+
+     List<BookingResponse>responses = new ArrayList<>();
+
+     for(Booking booking : bookings){
+         BookingResponse response = new BookingResponse(
+                 booking.getId(),
+                 booking.getStatus(),
+                 booking.getStartTime(),
+                 booking.getEndTime(),
+                 booking.getTreatment().getName(),
+                 booking.getStylist().getName()
+
+         );
+
+         responses.add(response);
+     }
+     return responses;
+
+
+    }
+
+
+    public void confirmBooking(Long id){
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Tenant tenant = user.getTenant();
+
+        Booking booking = bookingRepository.findByIdAndTenant(id, tenant)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+
+
+        if(booking.getStatus() != BookingStatus.PENDING){
+            throw new BookingConflictException("Only pending bookings can be confirmed");
+        }
+
+            booking.setStatus(BookingStatus.CONFIRMED);
+
+
+        bookingRepository.save(booking);
+
+
+    }
+
+    public void completeBooking(Long id){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Tenant tenant = user.getTenant();
+
+        Booking booking = bookingRepository.findByIdAndTenant(id, tenant)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new BookingConflictException(
+                    "Only confirmed bookings can be completed"
+            );
+        }
+
+        if(user.getRole() == Role.ROLE_OWNER){
+            booking.setStatus(BookingStatus.COMPLETED);
+        }
+        bookingRepository.save(booking);
+
+    }
+
+    public void cancelBooking(Long id){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Tenant tenant = user.getTenant();
+
+        Booking booking = bookingRepository.findByIdAndTenant(id, tenant)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new BookingConflictException("Booking is already cancelled");
+        }
+
+
+
+        if (booking.getStatus() == BookingStatus.COMPLETED) {
+            throw new BookingConflictException("Completed booking cannot be cancelled");
+        }
+
+
+        if (user.getRole() == Role.ROLE_OWNER) {
+            booking.setStatus(BookingStatus.CANCELLED);
+        }
+        else if (user.getRole() == Role.ROLE_CUSTOMER
+                && booking.getUser().getId().equals(user.getId())) {
+
+            booking.setStatus(BookingStatus.CANCELLED);
+        }
+        else {
+            throw new AccessDeniedException("You cannot cancel this booking");
+        }
+
+        bookingRepository.save(booking);
+
+
+    }
 
 }

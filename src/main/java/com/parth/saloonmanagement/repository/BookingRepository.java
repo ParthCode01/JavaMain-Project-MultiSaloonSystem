@@ -30,4 +30,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Optional<Booking> findByIdAndTenant(Long id, Tenant tenant);
 
     Optional<Booking> findByIdAndUser(Long id, User user);
+
+    List<Booking> findByUserId(Long id);
 }

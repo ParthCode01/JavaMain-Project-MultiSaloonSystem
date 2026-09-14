@@ -22,10 +22,12 @@ public class StylistService {
     private final StylistRepository stylistRepository;
     private final UserRepository userRepository;
 
+
     public StylistService(UserRepository userRepository, StylistRepository stylistRepository) {
         this.userRepository = userRepository;
         this.stylistRepository = stylistRepository;
     }
+
 
     public StylistResponse createStylist(StylistRequest request) {
 
@@ -54,6 +56,7 @@ public class StylistService {
                 savedStylist.getSkills()
         );
     }
+
 
     public List<StylistResponse> getStylists(){
 
@@ -110,6 +113,7 @@ public class StylistService {
 
     }
 
+
     public void deleteStylist(Long id){
         User user = userRepository.findByEmail(
                 SecurityContextHolder.getContext().getAuthentication().getName()
@@ -122,6 +126,7 @@ public class StylistService {
 
         stylistRepository.delete(stylist);
     }
+
 
     public List<BookingResponse> getMyBookings()
     throws AccessDeniedException{
