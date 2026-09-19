@@ -6,7 +6,9 @@ import com.parth.saloonmanagement.security.JwtService;
 import com.parth.saloonmanagement.security.UserDetailService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,6 +16,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableMethodSecurity
+@EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
@@ -39,7 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/stylists/me/bookings").hasRole("STYLIST")
                         .requestMatchers("/api/stylists/**").hasRole("OWNER")
-                        .requestMatchers("/api/stylists/**").hasRole("OWNER")
+                        .requestMatchers("/api/treatments/**").hasRole("OWNER")
                         .requestMatchers("/api/bookings/**").hasAnyRole("OWNER", "CUSTOMER")
                         .anyRequest().authenticated()
                 )

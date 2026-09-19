@@ -55,6 +55,8 @@ public class TreatmentService {
             );
         }
 
+
+
         public List<TreatmentResponse> getTreatments(){
 
         String email= SecurityContextHolder.getContext().getAuthentication().getName();

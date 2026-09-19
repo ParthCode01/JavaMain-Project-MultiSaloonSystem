@@ -121,15 +121,14 @@ spring.application.name=SaloonManagement
 # MySQL Database Configuration
 spring.datasource.url=jdbc:mysql://localhost:3306/saloonmanagement
 spring.datasource.username=root
-spring.datasource.password=namo5151
+spring.datasource.password=${DB_PASSWORD}
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
 # Hibernate DDL Auto
 spring.jpa.hibernate.ddl-auto=update
 
 # JWT Secret Key
-jwt.secret-key=your-secret-key-that-is-long-enough-for-learning
-```
+jwt.secret-key=${JWT_SECRET}
 
 **Database**: MySQL running on localhost:3306  
 **Schema Name**: saloonmanagement  

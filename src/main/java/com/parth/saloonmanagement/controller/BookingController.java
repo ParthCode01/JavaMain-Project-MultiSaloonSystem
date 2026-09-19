@@ -1,4 +1,4 @@
-    package com.parth.saloonmanagement.controller;
+package com.parth.saloonmanagement.controller;
 
 import com.parth.saloonmanagement.dto.BookingRequest;
 import com.parth.saloonmanagement.dto.BookingResponse;
@@ -28,11 +28,6 @@ public class BookingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping
-    public ResponseEntity<List<BookingResponse>> getAllBookings() {
-        List<BookingResponse> responses = bookingService.getAllBookings();
-        return ResponseEntity.ok(responses);
-    }
 
     @GetMapping("/{id}")
     public ResponseEntity<BookingResponse> getBookingById(@PathVariable Long id) {
@@ -75,6 +70,7 @@ public class BookingController {
         bookingService.confirmBooking(id);
         return ResponseEntity.ok().build();
     }
+
     @PreAuthorize("hasRole('OWNER')")
     @PatchMapping("/{id}/completed")
     public ResponseEntity<Void> completeBooking(@PathVariable Long id) {

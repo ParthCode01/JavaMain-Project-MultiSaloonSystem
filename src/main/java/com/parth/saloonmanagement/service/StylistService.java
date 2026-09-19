@@ -46,6 +46,8 @@ public class StylistService {
         stylist.setContact(request.getContact());
         stylist.setSkills(request.getSkills());
         stylist.setTenant(tenant);
+        stylist.setWorkStartTime(request.getWorkingStartTime());
+        stylist.setWorkEndTime(request.getWorkingEndTime());
 
         Stylist savedStylist = stylistRepository.save(stylist);
 

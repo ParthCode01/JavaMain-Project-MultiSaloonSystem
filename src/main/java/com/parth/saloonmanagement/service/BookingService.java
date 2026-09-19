@@ -11,6 +11,7 @@ import com.parth.saloonmanagement.repository.BookingRepository;
 import com.parth.saloonmanagement.repository.StylistRepository;
 import com.parth.saloonmanagement.repository.TreatmentRepository;
 import com.parth.saloonmanagement.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +35,8 @@ public class BookingService {
         this.stylistRepository = stylistRepository;
     }
 
+
+    @Transactional
     public BookingResponse createBooking(BookingRequest bookingRequest){
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -44,7 +47,7 @@ public class BookingService {
         Treatment treatment = treatmentRepository.findByIdAndTenant(bookingRequest.getTreatmentId(), user.getTenant())
                 .orElseThrow(() -> new ResourceNotFoundException("Treatment not found"));
 
-        Stylist stylist = stylistRepository.findByIdAndTenant(bookingRequest.getStylistId(), user.getTenant())
+        Stylist stylist = stylistRepository.findByIdAndTenantForUpdate(bookingRequest.getStylistId(), user.getTenant())
                 .orElseThrow(() -> new ResourceNotFoundException("Stylist not found"));
 
 
@@ -72,11 +75,16 @@ public class BookingService {
         if(!conflictOfUser.isEmpty()){
             throw new BookingConflictException("User is already booked");
         }
-        if (startTime.toLocalTime().isBefore(stylist.getWorkStartTime())
-                || endTime.toLocalTime().isAfter(stylist.getWorkEndTime())) {
 
-            throw new BookingConflictException("Booking is outside stylist working hours");
+        if (stylist.getWorkStartTime() != null && stylist.getWorkEndTime() != null) {
+            if (startTime.toLocalTime().isBefore(stylist.getWorkStartTime())
+                    || endTime.toLocalTime().isAfter(stylist.getWorkEndTime())) {
+                throw new BookingConflictException("Booking is outside stylist working hours");
+            }
+        } else {
+            throw new BookingConflictException("Stylist work hours not configured");
         }
+
         Booking booking = new Booking();
 
         booking.setUser(user);
@@ -235,47 +243,6 @@ public class BookingService {
     }
 
 
-    public List<BookingResponse> getAllBookings(){
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Tenant tenant = user.getTenant();
-
-        Role role = user.getRole();
-
-        List<Booking> list;
-
-        if(role == Role.ROLE_OWNER){
-
-            list = bookingRepository.findByTenant(tenant);
-
-        }else if(role == Role.ROLE_CUSTOMER){
-
-            list = bookingRepository.findByUser(user);
-
-        }else{
-            list = bookingRepository.findByTenant(tenant);
-        }
-        List<BookingResponse> responses = new ArrayList<>();
-
-        for(Booking booking: list){
-            BookingResponse response = new BookingResponse(
-                    booking.getId(),
-                    booking.getStatus(),
-                    booking.getStartTime(),
-                    booking.getEndTime(),
-                    booking.getTreatment().getName(),
-                    booking.getStylist().getName()
-
-            );
-            responses.add(response);
-        }
-
-        return responses;
-
-    }
 
     public List<BookingResponse> getMyTenantBookings(){
         String email = SecurityContextHolder.getContext().getAuthentication().getName();

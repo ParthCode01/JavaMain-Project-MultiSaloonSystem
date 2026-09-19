@@ -22,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -93,11 +94,12 @@ class BookingServiceTest {
 
         // Stylist
         Stylist stylist = new Stylist();
-
         stylist.setId(1L);
         stylist.setTenant(tenant);
+        stylist.setWorkStartTime(LocalTime.of(9, 0));  // ADD
+        stylist.setWorkEndTime(LocalTime.of(18, 0));   // ADD
 
-        when(stylistRepository.findByIdAndTenant(1L, tenant))
+        when(stylistRepository.findByIdAndTenantForUpdate(1L, tenant))
                 .thenReturn(Optional.of(stylist));
 
 
@@ -217,8 +219,10 @@ class BookingServiceTest {
 
         stylist.setId(1L);
         stylist.setTenant(tenant);
+        stylist.setWorkStartTime(LocalTime.of(9, 0));
+        stylist.setWorkEndTime(LocalTime.of(18, 0));
 
-        when(stylistRepository.findByIdAndTenant(1L, tenant))
+        when(stylistRepository.findByIdAndTenantForUpdate(1L, tenant))
                 .thenReturn(Optional.of(stylist));
 
 

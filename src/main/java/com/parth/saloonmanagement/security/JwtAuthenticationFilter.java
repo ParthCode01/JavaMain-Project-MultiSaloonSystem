@@ -41,22 +41,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String jwt = authHeader.substring(7);
 
-        String username = jwtService.extractUsername(jwt);
+        try {
+            String username = jwtService.extractUsername(jwt);
 
-        UserDetails userDetails =
-                userDetailsService.loadUserByUsername(username);
+            UserDetails userDetails =
+                    userDetailsService.loadUserByUsername(username);
 
-        if (jwtService.isTokenValid(jwt, userDetails)) {
+            if (jwtService.isTokenValid(jwt, userDetails)) {
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
-                    );
-
-            SecurityContextHolder.getContext()
-                    .setAuthentication(authentication);
+                SecurityContextHolder.getContext()
+                        .setAuthentication(authentication);
+            }
+        } catch (io.jsonwebtoken.security.SecurityException |
+                 io.jsonwebtoken.MalformedJwtException |
+                 io.jsonwebtoken.ExpiredJwtException |
+                 io.jsonwebtoken.UnsupportedJwtException |
+                 IllegalArgumentException ex) {
+            // Invalid token - continue without authentication
+            // Security will handle authorization later
+        } catch (Exception ex) {
+            // User not found or other errors - continue without authentication
         }
 
         filterChain.doFilter(request, response);
