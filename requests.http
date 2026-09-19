@@ -20,8 +20,7 @@ Authorization: Bearer YOUR_JWT_HERE
 
 ### Create Treatment
 POST https://saloon-management-o9kn.onrender.com/api/treatments/create
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ0ZXN0b3duZXIyQGdtYWlsLmNvbSIsImlhdCI6MTc4OTg0NjE1NiwiZXhwIjoxNzg5OTMyNTU2fQ.ZLbjcob6zqfyAMprzfsdtjKgjquAx1RUwwXEf46dZhI8McXUyGmWpBP4t2KSy97m
-
+Authorization: Bearer YOUR_JWT_HERE
 Content-Type: application/json
 
 {
